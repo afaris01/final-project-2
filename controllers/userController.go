@@ -13,6 +13,7 @@ import (
 
 var (
 	AppJson = "application/json"
+)
 
 func UserRegister(c *gin.Context) {
 	db := database.AmbilDB()
