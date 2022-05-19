@@ -7,27 +7,29 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 )
 
-var(
+var (
 	AppJson = "application/json"
-)
 
 func UserRegister(c *gin.Context) {
 	db := database.AmbilDB()
 	contentType := helpers.GetContentType(c)
 	_, _ = db, contentType
-	User := models.User{}
+	var (
+		// tambahUser user
+		User models.User
+	)
 
-	if contentType == appJSON {
+	if contentType == AppJson {
 		c.ShouldBindJSON(&User)
 	} else {
 		c.ShouldBind(&User)
 	}
 
-	err := db.Debug().Create(&User).Error
+	err := c.ShouldBindJSON(&User)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -38,11 +40,12 @@ func UserRegister(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"id":       User.ID,
-		"age":      User.Age,
-		"email":    User.Email,
-		"password": User.Password,
-		"username": User.Username,
+		"id":         User.ID,
+		"age":        User.Age,
+		"email":      User.Email,
+		"password":   User.Password,
+		"username":   User.Username,
+		"created_at": User.CreatedAt,
 	})
 }
 
@@ -53,7 +56,7 @@ func UserLogin(c *gin.Context) {
 	User := models.User{}
 	password := ""
 
-	if contentType == appJSON {
+	if contentType == AppJson {
 		c.ShouldBindJSON(&User)
 	} else {
 		c.ShouldBind(&User)
@@ -97,7 +100,7 @@ func UbahUser(c *gin.Context) {
 	paramId, _ := strconv.Atoi(c.Param("userId"))
 	userId := uint(userData["id"].(float64))
 
-	if contentType == appJSON {
+	if contentType == AppJson {
 		c.ShouldBindJSON(&User)
 	} else {
 		c.ShouldBind(&User)
@@ -116,16 +119,16 @@ func UbahUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"id":         User.ID,
-		"email":      User.Email,
-		"username":   User.Username,
 		"age":        User.Age,
+		"email":      User.Email,
+		"password":   User.Password,
+		"username":   User.Username,
 		"updated_at": User.UpdatedAt,
 	})
 }
 
-func DeleteUser(c *gin.Context) {
-	db := database.GetDB()
+func HapusUser(c *gin.Context) {
+	db := database.AmbilDB()
 	userData := c.MustGet("userData").(jwt.MapClaims)
 	User := models.User{}
 
@@ -147,3 +150,4 @@ func DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Your account has been successfully deleted",
 	})
+}
