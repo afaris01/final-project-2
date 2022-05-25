@@ -15,22 +15,22 @@ var (
 	password = ""
 	dbPort   = "443"
 	dbName   = "mygram"
-	db       *gorm.DB
+	DB       *gorm.DB
 	err      error
 )
 
 func MulaiDB() {
 	dsn := "root@tcp(127.0.0.1:3306)/mygram?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	database, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Gagal menyambung ke database :", err)
 	}
 
 	fmt.Println("Koneksi Sukses")
-	db.Debug().AutoMigrate(models.User{}, models.Photo{}, models.Comment{}, models.SocialMedia{})
+	database.Debug().AutoMigrate(models.User{}, models.Photo{}, models.Comment{}, models.SocialMedia{})
+	DB = database
 }
 
-
 func AmbilDB() *gorm.DB {
-	return db
+	return DB
 }

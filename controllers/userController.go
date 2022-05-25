@@ -11,34 +11,41 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+type Input struct {
+	Age      uint   `json:"age" binding:"required"`
+	Email    string `json:"email" form:"email" binding:"required"`
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 var (
-	AppJson = "application/json"
+	AppJson  = "application/json"
+	db = database.AmbilDB()
+	User     models.User
+	regInput Input
+	logInput Input
+	upInput  Input
 )
 
 func UserRegister(c *gin.Context) {
-	db := database.AmbilDB()
 	contentType := helpers.GetContentType(c)
 	_, _ = db, contentType
-	var (
-		// tambahUser user
-		User models.User
-	)
 
 	if contentType == AppJson {
-		c.ShouldBindJSON(&User)
+		err := c.ShouldBindJSON(&regInput)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "bad Request",
+				"message": err.Error(),
+			})
+			return
+		}
 	} else {
-		c.ShouldBind(&User)
+		c.ShouldBind(&regInput)
 	}
 
-	err := c.ShouldBindJSON(&User)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "bad Request",
-			"message": err.Error(),
-		})
-		return
-	}
+	User := models.User{Age: regInput.Age, Email: regInput.Email, Username: regInput.Username, Password: regInput.Password}
+	database.DB.Create(&User)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"id":         User.ID,
@@ -54,7 +61,7 @@ func UserLogin(c *gin.Context) {
 	db := database.AmbilDB()
 	contentType := helpers.GetContentType(c)
 	_, _ = db, contentType
-	User := models.User{}
+	
 	password := ""
 
 	if contentType == AppJson {
@@ -93,31 +100,35 @@ func UserLogin(c *gin.Context) {
 }
 
 func UbahUser(c *gin.Context) {
-	db := database.AmbilDB()
 	userData := c.MustGet("userData").(jwt.MapClaims)
 	contentType := helpers.GetContentType(c)
-	User := models.User{}
 
-	paramId, _ := strconv.Atoi(c.Param("userId"))
+	paramId, _ := strconv.Atoi(c.Param("id"))
 	userId := uint(userData["id"].(float64))
-
-	if contentType == AppJson {
-		c.ShouldBindJSON(&User)
-	} else {
-		c.ShouldBind(&User)
-	}
-
 	User.ID = userId
 
-	err := db.Model(&User).Where("id = ?", paramId).Updates(models.User{Username: User.Username, Email: User.Email, Password: User.Password, Age: User.Age}).Error
+	if contentType == AppJson {
+		err := database.DB.Where("id = ?", paramId).Error
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Record Not Found ",
+				"message": err.Error(),
+			})
+			return
+		}
+	}
 
+	err := c.ShouldBindJSON(&upInput)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"err":     "Bad Request",
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
+
+	upInput.Password = helpers.HashPass(upInput.Password)
+	update := models.User{Age: upInput.Age, Email: upInput.Email, Username: upInput.Username, Password: upInput.Password}
+	database.DB.Model(&User).Updates(update)
 
 	c.JSON(http.StatusOK, gin.H{
 		"age":        User.Age,
