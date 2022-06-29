@@ -12,7 +12,7 @@ import (
 )
 
 type Input struct {
-	Age      uint   `json:"age" binding:"required"`
+	Age      uint   `json:"age" bit inding:"required"`
 	Email    string `json:"email" form:"email" binding:"required"`
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
@@ -127,7 +127,7 @@ func UbahUser(c *gin.Context) {
 
 	upInput.Password = helpers.HashPass(upInput.Password)
 	update := models.User{Age: upInput.Age, Email: upInput.Email, Username: upInput.Username, Password: upInput.Password}
-	
+
 	if err := database.DB.Model(&User).Updates(update).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
