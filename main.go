@@ -9,6 +9,6 @@ import (
 func main() {
 	database.MulaiDB()
 	r := router.MulaiApp()
-	port := os.Getenv("PORT")
+	port := os.Getenv("DB_PORT")
 	r.Run(":" + port)
 }
