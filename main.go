@@ -3,10 +3,12 @@ package main
 import (
 	"final-project-2/database"
 	"final-project-2/router"
+	"os"
 )
 
-func main(){
+func main() {
 	database.MulaiDB()
 	r := router.MulaiApp()
-	r.Run(":8080")
+	port := os.Getenv("PORT")
+	r.Run(":" + port)
 }
