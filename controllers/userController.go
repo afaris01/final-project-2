@@ -20,14 +20,13 @@ type Input struct {
 
 var (
 	AppJson  = "application/json"
-	db = database.AmbilDB()
 	User     models.User
 	regInput Input
-	logInput Input
 	upInput  Input
 )
 
 func UserRegister(c *gin.Context) {
+	db := database.AmbilDB()
 	contentType := helpers.GetContentType(c)
 	_, _ = db, contentType
 
@@ -60,8 +59,9 @@ func UserRegister(c *gin.Context) {
 func UserLogin(c *gin.Context) {
 	db := database.AmbilDB()
 	contentType := helpers.GetContentType(c)
+	User := models.User{}
 	_, _ = db, contentType
-	
+
 	password := ""
 
 	if contentType == AppJson {
@@ -118,8 +118,7 @@ func UbahUser(c *gin.Context) {
 		}
 	}
 
-	err := c.ShouldBindJSON(&upInput)
-	if err != nil {
+	if err := c.ShouldBindJSON(&upInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -128,7 +127,13 @@ func UbahUser(c *gin.Context) {
 
 	upInput.Password = helpers.HashPass(upInput.Password)
 	update := models.User{Age: upInput.Age, Email: upInput.Email, Username: upInput.Username, Password: upInput.Password}
-	database.DB.Model(&User).Updates(update)
+	
+	if err := database.DB.Model(&User).Updates(update).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"age":        User.Age,
@@ -148,9 +153,9 @@ func HapusUser(c *gin.Context) {
 
 	User.ID = userID
 
-	err := db.Model(&User).Where("id = ?", userID).Delete(models.User{}).Error
+	err := db.Model(&User).Where("id = ?", User.ID).Delete(models.User{}).Error
 
-	if err != nil {
+	if err != nil && userID != User.ID {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"err":     "Bad Request",
 			"message": err.Error(),
