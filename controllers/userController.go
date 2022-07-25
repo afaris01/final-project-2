@@ -12,7 +12,7 @@ import (
 )
 
 type Input struct {
-	Age      uint   `json:"age" bit inding:"required"`
+	Age      uint   `json:"age" binding:"required"`
 	Email    string `json:"email" form:"email" binding:"required"`
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
